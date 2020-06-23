@@ -25,3 +25,20 @@ CREATE TABLE employee (
 SELECT * FROM department;
 SELECT * FROM role;
 SELECT * FROM employee;
+
+INSERT INTO department VALUES(0, "Sales");
+INSERT INTO department VALUES(0, "Engineering");
+INSERT INTO department VALUES(0, "Finance");
+INSERT INTO department VALUES(0, "Legal");
+
+INSERT INTO role VALUES(0, "Sales Lead", 100000, 1);
+INSERT INTO role VALUES(0, "Salesperson", 80000, 1);
+INSERT INTO role VALUES(0, "Lead Engineer", 150000, 2);
+INSERT INTO role VALUES(0, "Software Engineer", 120000, 2);
+INSERT INTO role VALUES(0, "Account Manager", 200000, 3);
+INSERT INTO role VALUES(0, "Accountant", 130000, 3);
+INSERT INTO role VALUES(0, "Legal Team Lead", 300000, 4);
+INSERT INTO role VALUES(0, "Lawyer", 195000, 4);
+
+INSERT INTO employee VALUES(0, "Anna", "Jeon", 3, 0);
+
