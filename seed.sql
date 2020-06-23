@@ -5,23 +5,25 @@ CREATE DATABASE CMS_DB;
 USE CMS_DB;
 
 CREATE TABLE department (
-    id INTEGER PRIMARY KEY,
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(30)
 );
 
 CREATE TABLE role (
-    id INTEGER PRIMARY KEY,
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(30),
     salary DECIMAL,
-    department_id INTEGER
+    department_id INTEGER,
+    FOREIGN KEY (department_id) REFERENCES department(id)
 );
 
 CREATE TABLE employee (
-    id INTEGER PRIMARY KEY,
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(30),
     last_name VARCHAR(30),
     role_id INTEGER,
-    manager_id INTEGER DEFAULT(NULL)
+    manager_id INTEGER DEFAULT NULL,
+    FOREIGN KEY (role_id) REFERENCES role(id)
 );
 
 SELECT * FROM department;
@@ -42,5 +44,5 @@ INSERT INTO role VALUES(0, "Accountant", 130000, 3);
 INSERT INTO role VALUES(0, "Legal Team Lead", 300000, 4);
 INSERT INTO role VALUES(0, "Lawyer", 195000, 4);
 
-INSERT INTO employee VALUES(0, "Anna", "Jeon", 3, 0);
+INSERT INTO employee VALUES(0, "Anna", "Jeon", 3);
 
