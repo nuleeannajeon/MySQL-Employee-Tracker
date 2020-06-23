@@ -19,6 +19,7 @@
   "homepage": "https://github.com/nuleeannajeon/MySQL-Employee-Tracker#readme",
   "dependencies": {
     "dotenv": "^8.2.0",
+    "inquirer": "^7.2.0",
     "mysql": "^2.18.1"
   }
 }
