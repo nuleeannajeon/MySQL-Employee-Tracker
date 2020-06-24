@@ -38,21 +38,14 @@ const db = new Database({
 });
 
 let response
-
 async function mainApp(){
-    let viewAll = await db.query(   "SELECT employee.id, employee.first_name, employee.last_name, " +
-                                        "role.title, role.salary, department.name, " +
-                                        "CONCAT(manager.first_name,' ', manager.last_name) AS manager_name " +
-                                        "FROM employee LEFT JOIN role ON role.id=employee.role_id " +
-                                        "LEFT JOIN department ON department.id=role.department_id " +
-                                        "LEFT JOIN employee AS manager ON employee.manager_id=manager.id;"  )
-    console.table(viewAll);
     response = await inquirer.prompt([
         {
             type: "list",
             name: "manage",
             message: "What would you like to manage today?",
             choices:[
+                        { name: "View Full Table with Employees", value: "full" },        
                         { name: "Manage Departments", value: "department" },
                         { name: "Manage Roles", value: "role" },
                         { name: "Manage Employees", value: "employee" },
@@ -60,7 +53,16 @@ async function mainApp(){
                     ]
         }
     ])
-
+    if ( response.manage == "full" ){
+        let viewAll = await db.query(   "SELECT employee.id, employee.first_name, employee.last_name, " +
+                                        "role.title, role.salary, department.name, " +
+                                        "CONCAT(manager.first_name,' ', manager.last_name) AS manager_name " +
+                                        "FROM employee LEFT JOIN role ON role.id=employee.role_id " +
+                                        "LEFT JOIN department ON department.id=role.department_id " +
+                                        "LEFT JOIN employee AS manager ON employee.manager_id=manager.id;"  )
+        console.table(viewAll);
+        mainApp();
+    }
     if( response.manage == "department" ){
         const viewDepartment = await db.query( "SELECT * FROM department" )
         response = await inquirer.prompt([
@@ -72,8 +74,7 @@ async function mainApp(){
                             { name: "View departments", value: "view" },
                             { name: "Add new department", value: "add" },
                             { name: "Delete existing department", value: "delete" },
-                            { name: "View total utilized budget of a department ", value: "budget" },
-                            { name: "Return to main menu", value: "return" }
+                            { name: "View total utilized budget of a department ", value: "budget" }
                         ]
             }
         ])
@@ -135,12 +136,7 @@ async function mainApp(){
                                                 "WHERE department.id = ?", response.departmentId )
             console.table( budgetByDep );
         }
-        if( response.action == "return"){ //return to main menu
-            mainApp();
-        }
-        else {
-            db.close();
-        }
+        mainApp();
     }
     if( response.manage == "role" ){
         const viewRole = await db.query( "SELECT * FROM role" )
@@ -153,8 +149,7 @@ async function mainApp(){
                             { name: "View roles", value: "view" },
                             { name: "Add new roles", value: "add" },
                             { name: "Update existing roles", value: "update" },
-                            { name: "Delete roles", value: "delete" },
-                            { name: "Return to main menu", value: "return" }
+                            { name: "Delete roles", value: "delete" }
                         ]
             }
         ])
@@ -257,12 +252,7 @@ async function mainApp(){
             const deleteRole = await db.query("DELETE FROM role WHERE id=?", response.deleteRole);
             console.log(`-------------Successfully DELETED selected role-------------`)
         }
-        if( response.action == "return"){
-            mainApp();
-        }
-        else {
-            db.close();
-        }
+        mainApp();
     }
     if( response.manage == "employee" ){
         response = await inquirer.prompt([
@@ -276,8 +266,7 @@ async function mainApp(){
                             { name: "Update existing employees", value: "update" },
                             { name: "Delete an employee", value: "delete" },
                             { name: "View employees by manager", value: "viewByManager" },
-                            { name: "Update employee managers", value: "updateEmpManager" },
-                            { name: "Return to main menu", value: "return" }
+                            { name: "Update employee managers", value: "updateEmpManager" }
                         ]
             }
         ])
@@ -445,12 +434,7 @@ async function mainApp(){
                 const newManager = await db.query('UPDATE employee SET manager_id= ? WHERE id= ?', [response.newManager, response.selectedEmployee]);
                 console.log(`-------------Succesfully Updated employee's manager!-------------`)
         }
-        if( response.action == "return"){
-            mainApp();
-        }
-        else {
-            db.close();
-        }
+        mainApp();
     }
     if( response.manage == "exit" ){
         db.close();
