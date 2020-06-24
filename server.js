@@ -97,7 +97,6 @@ async function mainApp(){
             viewDepartment.forEach( function( item ){
                 department.push( { name: item.name, value: item.id } )
             })
-            console.log( `department: `, department )
 
             response = await inquirer.prompt([
                 {
@@ -111,20 +110,30 @@ async function mainApp(){
             console.log(`-----------------DELETED selected department successfully-----------------`);
         }
         if( response.action == "budget"){
-            const viewBudget = await db.query(
-                "SELECT employee.id, role.department_id, role.salary "+
-                "FROM employee LEFT JOIN role ON role.id=employee.role_id "+
-                "LEFT JOIN department ON department.id=role.department_id;" )
-            viewBudget.forEach(function(item, index){
-                if(index !== index){
-                    if(item[index].department_id == item[index].department_id){
-                        budget += item.salary;
-                        console.log(budget);
-                    }
+            const totalBudget = await db.query( "SELECT SUM(role.salary) AS 'Total Budget' " +
+                                                "FROM employee LEFT JOIN role ON employee.role_id=role.id "+
+                                                "LEFT JOIN department ON role.department_id=department.id " )
+            console.table(totalBudget)
+
+            const viewDepartment = await db.query( "SELECT * FROM department")
+            department = []
+            viewDepartment.forEach( function( item ){
+                department.push( { name: item.name, value: item.id } )
+            })
+
+            response = await inquirer.prompt([
+                {
+                    type: "list",
+                    name: "departmentId",
+                    message: "Which department would you like to view the budget of?",
+                    choices: department
                 }
-            });
-// -----------------------------------------------------------------------------------------------------------------------------------------------------//
-            console.log(viewBudget[1].id)
+            ])
+            const budgetByDep = await db.query( "SELECT department.name, SUM(role.salary) AS 'Total Budget' " +
+                                                "FROM employee LEFT JOIN role ON employee.role_id=role.id "+
+                                                "LEFT JOIN department ON role.department_id=department.id "+
+                                                "WHERE department.id = ?", response.departmentId )
+            console.table( budgetByDep );
         }
         if( response.action == "return"){ //return to main menu
             mainApp();
