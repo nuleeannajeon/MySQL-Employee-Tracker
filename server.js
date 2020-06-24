@@ -114,7 +114,20 @@ async function mainApp(){
             console.log( deleteDepartment );
         }
         else if( response.action == "budget"){
-            console.log( 'budget' );
+            const viewBudget = await db.query(
+                "SELECT employee.id, role.department_id, role.salary "+
+                "FROM employee LEFT JOIN role ON role.id=employee.role_id "+
+                "LEFT JOIN department ON department.id=role.department_id;" )
+            viewBudget.forEach(function(item, index){
+                if(index !== index){
+                    if(item[index].department_id == item[index].department_id){
+                        budget += item.salary;
+                        console.log(budget);
+                    }
+                }
+            });
+// -----------------------------------------------------------------------------------------------------------------------------------------------------//
+            console.log(viewBudget[1].id)
         }
         else { //return to main menu
             mainApp();
@@ -398,7 +411,7 @@ async function mainApp(){
 
             const viewManagerId = await db.query("SELECT employee.id, CONCAT(employee.first_name,' ', employee.last_name) " +
                                                 "AS manager_name FROM employee WHERE employee.manager_id IS NULL;" )
-            managerId = []
+            managerId = [{name:"No Manager", value: null}]
             viewManagerId.forEach( function(item){
                 managerId.push({ name: item.manager_name, value: item.id} )
             })
@@ -414,7 +427,7 @@ async function mainApp(){
                     type: "list",
                     name: "newManager",
                     message: "Who is the new manager?",
-                    choices: [ {managerId}, { name:"no manager", value: null }]
+                    choices: managerId
                 }
             ])
                 const newManager = await db.query('UPDATE employee SET manager_id= ? WHERE id= ?', [response.newManager, response.selectedEmployee]);
