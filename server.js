@@ -40,6 +40,14 @@ const db = new Database({
 let response
 
 async function mainApp(){
+    let viewAll = await db.query(   "SELECT employee.id, employee.first_name, employee.last_name, " +
+                                        "role.title, role.salary, department.name, " +
+                                        "CONCAT(manager.first_name,' ', manager.last_name) AS manager_name " +
+                                        "FROM employee LEFT JOIN role ON role.id=employee.role_id " +
+                                        "LEFT JOIN department ON department.id=role.department_id " +
+                                        "LEFT JOIN employee AS manager ON employee.manager_id=manager.id;"  )
+    console.table(viewAll);
+
     response = await inquirer.prompt([
         {
             type: "list",
@@ -49,7 +57,6 @@ async function mainApp(){
                         { name: "Manage Departments", value: "department" },
                         { name: "Manage Roles", value: "role" },
                         { name: "Manage Employees", value: "employee" },
-                        { name: "View all employees tracker table", value: "viewAll"},
                         { name: "Exit", value: "exit" }
                     ]
         }
@@ -157,9 +164,8 @@ async function mainApp(){
                 }
             ])
             const addRole = await db.query( "INSERT INTO role VALUES(?,?,?,?)", [0, response.addRole, response.addSalary, response.roleDepartment] );
-            // console.log(response.roleDepartment);
             console.log(`ADDED new role [${response.addRole}] successfully!`);
-            // console.log( addRole );
+
         }
         else if( response.action == "update" ){
             const viewRole = await db.query( "SELECT * FROM role")
@@ -190,7 +196,6 @@ async function mainApp(){
                     }
                 ])
                 const updateTitle = await db.query('UPDATE role SET title= ? WHERE id= ?', [response.updateTitle, response.updateRole]);
-                // console.log(response.updateRole);
                 console.log( `Successfully changed a title to ${response.updateTitle}` );
             }
             if( response.titleOrSalary == "salary" ){
@@ -209,7 +214,7 @@ async function mainApp(){
                 ])
                 const updateSalary = await db.query('UPDATE role SET salary= ? WHERE id= ?', [response.updateSalary, response.updateRole]);
                 // console.log(response.updateRole);
-                console.log( `Successfully changed a title to ${response.updateSalary}` );
+                console.log( `Successfully changed a salary to $${response.updateSalary}` );
             }
 
         }
@@ -228,8 +233,7 @@ async function mainApp(){
                 }
             ])
             const deleteRole = await db.query("DELETE FROM role WHERE id=?", response.deleteRole);
-            console.log(`Successfully DELETED [${response.deleteRole}]`)
-            //ASK how do i get name instead of value!!!!!
+            console.log(`Successfully DELETED`)
         }
         else {
             mainApp();
@@ -254,6 +258,7 @@ async function mainApp(){
         ])
         if( response.action == "view" ){
             const viewEmployee = await db.query("SELECT * FROM employee")
+            console.table( viewEmployee )
         }
         else if( response.action == "add" ){
             const viewRole = await db.query( "SELECT * FROM role")
@@ -261,6 +266,14 @@ async function mainApp(){
             viewRole.forEach( function( item ){
                 role.push( { name: item.title, value: item.id } )
             })
+
+            const viewManagerId = await db.query("SELECT employee.id, CONCAT(employee.first_name,' ', employee.last_name) " +
+                                                "AS manager_name FROM employee WHERE employee.manager_id IS NULL;" )
+            managerId = []
+            viewManagerId.forEach( function(item){
+                managerId.push({ name: item.manager_name, value: item.id} )
+            })
+
             response = await inquirer.prompt([
                 {
                     type: "input",
@@ -281,34 +294,75 @@ async function mainApp(){
                 {
                     type: "list",
                     name: "employeeManager",
-                    message: "What is the role of an employee you want to add?",
-                    choices: ['null']
+                    message: "Who is the manager of an employee?",
+                    choices: managerId
                 }
             ])
-            const addEmployee = await db.query("INSERT INTO employee VALUES(?,?,?,?,?)", [0, response.first_name, response.last_name, response.employeeRole, 0] )
+            const addEmployee = await db.query("INSERT INTO employee VALUES(?,?,?,?,?)", [0, response.first_name, response.last_name, response.employeeRole, response.employeeManager] )
             console.log(`Successfully ADDED employee ${response.first_name} ${response.last_name}!`);
         }
         else if( response.action == "update" ){
-            const viewEmployee = await db.query( "SELECT * FROM employee")
+            const viewEmployee = await db.query("SELECT * FROM employee")
             employee = []
             viewEmployee.forEach( function( item ){
-                role.push( { name: item.first_name + last_name, value: item.id } )
+                employee.push( { name: item.first_name +' '+ item.last_name, value: item.id } )
             })
             response = await inquirer.prompt([
                 {
                     type: "list",
                     name: "updateEmployee",
-                    message: "Which employee do you want to update?",
-                    choices: employee
-                },
-                {
-                    type: "list",
-                    name: "updateEmployee",
-                    message: "Which employee do you want to update?",
-                    choices: employee
-                },
+                    message: "What would you like to change in the employee table?",
+                    choices:[
+                                { name: "Name of an existing employee", value: "name" },
+                                { name: "Role of an existing employee", value: "role" }
+                            ]
+                }
             ])
-            // const updateTitle = await db.query('UPDATE role SET title= ? WHERE id= ?', [response.updateTitle, response.updateRole]);
+            if( response.updateEmployee == 'name' ){
+                response = await inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "selectedEmployee",
+                        message: "Which employee's name do you want to update?",
+                        choices: employee
+                    },
+                    {
+                        type: "input",
+                        name: "newFirstName",
+                        message: "Write their new first name."
+                    },
+                    {
+                        type: "input",
+                        name: "newLastName",
+                        message: "Write their new last name."
+                    }
+                ])
+                const newName = await db.query('UPDATE employee SET first_name= ?, last_name= ? WHERE id= ?', [response.newFirstName, response.newLastName, response.selectedEmployee])
+                console.log( `Successfully Updated employee's name to ${response.newFirstName} ${response.newLastName}`);
+            }
+            if( response.updateEmployee == "role" ){
+                const viewRole = await db.query( "SELECT * FROM role")
+                role = []
+                viewRole.forEach( function( item ){
+                    role.push( { name: item.title, value: item.id } )
+                })
+                response = await inquirer.prompt([
+                    {
+                        type: "list",
+                        name: "selectedEmployee",
+                        message: "Which employee's name do you want to update?",
+                        choices: employee
+                    },
+                    {
+                        type: "list",
+                        name: "newRole",
+                        message: "What is their new role?",
+                        choices: role
+                    }
+                ])
+                const newRole = await db.query('UPDATE employee SET role_id= ? WHERE id= ?', [response.newRole, response.selectedEmployee]);
+                console.log(`Successfully Updated employee's role!`);
+            }
         }
         else if( response.action == "delete" ){
             const viewEmployee = await db.query( "SELECT * FROM employee")
@@ -328,25 +382,51 @@ async function mainApp(){
             console.log(`Successfully DELETED [${response.deleteEmployee}]`)
         }
         else if( response.action == "viewByManager"){
-            console.log(` NEED TO DO THIS PART`)
+            let empByManager = await db.query("SELECT employee.id, " +
+                                            "CONCAT(employee.first_name,' ', employee.last_name), " +
+                                            "CONCAT(manager.first_name,' ', manager.last_name)" +
+                                            "FROM employee LEFT JOIN role ON role.id=employee.role_id " +
+                                            "LEFT JOIN employee AS manager ON employee.manager_id=manager.id;")
+            console.table( empByManager );
         }
         else if( response.action == "updateEmpManager"){
-            console.log(`NEED TO DO THIS PART`)
+            const viewEmployee = await db.query("SELECT * FROM employee")
+            employee = []
+            viewEmployee.forEach( function( item ){
+                employee.push( { name: item.first_name +' '+ item.last_name, value: item.id } )
+            })
+
+            const viewManagerId = await db.query("SELECT employee.id, CONCAT(employee.first_name,' ', employee.last_name) " +
+                                                "AS manager_name FROM employee WHERE employee.manager_id IS NULL;" )
+            managerId = []
+            viewManagerId.forEach( function(item){
+                managerId.push({ name: item.manager_name, value: item.id} )
+            })
+
+            response = await inquirer.prompt([
+                {
+                    type: "list",
+                    name: "selectedEmployee",
+                    message: "Which employee's name do you want to update?",
+                    choices: employee
+                },
+                {
+                    type: "list",
+                    name: "newManager",
+                    message: "Who is the new manager?",
+                    choices: [ {managerId}, { name:"no manager", value: null }]
+                }
+            ])
+                const newManager = await db.query('UPDATE employee SET manager_id= ? WHERE id= ?', [response.newManager, response.selectedEmployee]);
+                console.log(`Succesfully Updated employee's manager!`)
         }
         else {
             mainApp();
         }
     }
-    if( response.manage == "viewAll" ){
-        let viewAll = await db.query( "SELECT employee.id, employee.first_name, employee.last_name, " +
-                                        "role.title, role.salary, department.name, employee.manager_id "+
-                                        "FROM employee LEFT JOIN role ON role.id=employee.role_id "+
-                                        "LEFT JOIN department ON department.id=role.department_id;" );
-        console.table(viewAll);
-        
-    }
     if( response.manage == "exit" ){
         db.close();
     }
+    db.close();
 }
 mainApp();
