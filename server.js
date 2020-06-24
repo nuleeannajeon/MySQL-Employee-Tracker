@@ -47,7 +47,6 @@ async function mainApp(){
                                         "LEFT JOIN department ON department.id=role.department_id " +
                                         "LEFT JOIN employee AS manager ON employee.manager_id=manager.id;"  )
     console.table(viewAll);
-
     response = await inquirer.prompt([
         {
             type: "list",
@@ -81,7 +80,7 @@ async function mainApp(){
         if( response.action == "view"){
             console.table( viewDepartment );
         }
-        else if( response.action == "add"){
+        if( response.action == "add"){
             response = await inquirer.prompt([
                 {
                     type: "input",
@@ -90,11 +89,9 @@ async function mainApp(){
                 }
             ])
             const addDepartment = await db.query( "INSERT INTO department VALUES(?, ?)", [0, response.addDepartment]);
-            console.log(`ADDED new department ${response.addDepartment}`)
-            console.log( addDepartment );
-            // INSERT INTO department VALUES(0, "Legal");
+            console.log(`-----------------ADDED new department [${response.addDepartment}]-----------------`)
         }
-        else if( response.action == "delete" ){
+        if( response.action == "delete" ){
             const viewDepartment = await db.query( "SELECT * FROM department")
             department = []
             viewDepartment.forEach( function( item ){
@@ -111,9 +108,9 @@ async function mainApp(){
                 }
             ])
             const deleteDepartment = await db.query( "DELETE FROM department WHERE ?", {id: response.deleteDepartment} )
-            console.log( deleteDepartment );
+            console.log(`-----------------DELETED selected department successfully-----------------`);
         }
-        else if( response.action == "budget"){
+        if( response.action == "budget"){
             const viewBudget = await db.query(
                 "SELECT employee.id, role.department_id, role.salary "+
                 "FROM employee LEFT JOIN role ON role.id=employee.role_id "+
@@ -129,8 +126,11 @@ async function mainApp(){
 // -----------------------------------------------------------------------------------------------------------------------------------------------------//
             console.log(viewBudget[1].id)
         }
-        else { //return to main menu
+        if( response.action == "return"){ //return to main menu
             mainApp();
+        }
+        else {
+            db.close();
         }
     }
     if( response.manage == "role" ){
@@ -152,7 +152,7 @@ async function mainApp(){
         if( response.action == "view"){
             console.table( viewRole );
         }
-        else if( response.action == "add"){
+        if( response.action == "add"){
             const viewDepartment = await db.query( "SELECT * FROM department")
             department = []
             viewDepartment.forEach( function( item ){
@@ -177,10 +177,10 @@ async function mainApp(){
                 }
             ])
             const addRole = await db.query( "INSERT INTO role VALUES(?,?,?,?)", [0, response.addRole, response.addSalary, response.roleDepartment] );
-            console.log(`ADDED new role [${response.addRole}] successfully!`);
+            console.log(`-------------ADDED new role [${response.addRole}] successfully!-------------`);
 
         }
-        else if( response.action == "update" ){
+        if( response.action == "update" ){
             const viewRole = await db.query( "SELECT * FROM role")
             role = []
             viewRole.forEach( function( item ){
@@ -209,7 +209,7 @@ async function mainApp(){
                     }
                 ])
                 const updateTitle = await db.query('UPDATE role SET title= ? WHERE id= ?', [response.updateTitle, response.updateRole]);
-                console.log( `Successfully changed a title to ${response.updateTitle}` );
+                console.log( `-------------Successfully changed a title to ${response.updateTitle}-------------` );
             }
             if( response.titleOrSalary == "salary" ){
                 response = await inquirer.prompt([
@@ -227,11 +227,11 @@ async function mainApp(){
                 ])
                 const updateSalary = await db.query('UPDATE role SET salary= ? WHERE id= ?', [response.updateSalary, response.updateRole]);
                 // console.log(response.updateRole);
-                console.log( `Successfully changed a salary to $${response.updateSalary}` );
+                console.log( `-------------Successfully changed a salary to $${response.updateSalary}-------------` );
             }
 
         }
-        else if( response.action == "delete" ){
+        if( response.action == "delete" ){
             const viewRole = await db.query( "SELECT * FROM role")
             role = []
             viewRole.forEach( function( item ){
@@ -246,10 +246,13 @@ async function mainApp(){
                 }
             ])
             const deleteRole = await db.query("DELETE FROM role WHERE id=?", response.deleteRole);
-            console.log(`Successfully DELETED`)
+            console.log(`-------------Successfully DELETED selected role-------------`)
+        }
+        if( response.action == "return"){
+            mainApp();
         }
         else {
-            mainApp();
+            db.close();
         }
     }
     if( response.manage == "employee" ){
@@ -273,7 +276,7 @@ async function mainApp(){
             const viewEmployee = await db.query("SELECT * FROM employee")
             console.table( viewEmployee )
         }
-        else if( response.action == "add" ){
+        if( response.action == "add" ){
             const viewRole = await db.query( "SELECT * FROM role")
             role = []
             viewRole.forEach( function( item ){
@@ -312,9 +315,9 @@ async function mainApp(){
                 }
             ])
             const addEmployee = await db.query("INSERT INTO employee VALUES(?,?,?,?,?)", [0, response.first_name, response.last_name, response.employeeRole, response.employeeManager] )
-            console.log(`Successfully ADDED employee ${response.first_name} ${response.last_name}!`);
+            console.log(`----------Successfully ADDED employee ${response.first_name} ${response.last_name}!----------`);
         }
-        else if( response.action == "update" ){
+        if( response.action == "update" ){
             const viewEmployee = await db.query("SELECT * FROM employee")
             employee = []
             viewEmployee.forEach( function( item ){
@@ -351,7 +354,7 @@ async function mainApp(){
                     }
                 ])
                 const newName = await db.query('UPDATE employee SET first_name= ?, last_name= ? WHERE id= ?', [response.newFirstName, response.newLastName, response.selectedEmployee])
-                console.log( `Successfully Updated employee's name to ${response.newFirstName} ${response.newLastName}`);
+                console.log( `-------Successfully Updated employee's name to ${response.newFirstName} ${response.newLastName}-------`);
             }
             if( response.updateEmployee == "role" ){
                 const viewRole = await db.query( "SELECT * FROM role")
@@ -374,10 +377,10 @@ async function mainApp(){
                     }
                 ])
                 const newRole = await db.query('UPDATE employee SET role_id= ? WHERE id= ?', [response.newRole, response.selectedEmployee]);
-                console.log(`Successfully Updated employee's role!`);
+                console.log(`---------------Successfully Updated employee's role!---------------`);
             }
         }
-        else if( response.action == "delete" ){
+        if( response.action == "delete" ){
             const viewEmployee = await db.query( "SELECT * FROM employee")
             employee = []
             viewEmployee.forEach( function( item ){
@@ -392,17 +395,17 @@ async function mainApp(){
                 }
             ])
             const deleteEmployee = await db.query("DELETE FROM employee WHERE id=?", response.deleteEmployee);
-            console.log(`Successfully DELETED [${response.deleteEmployee}]`)
+            console.log(`-------------Successfully DELETED selected employee!-------------`)
         }
-        else if( response.action == "viewByManager"){
+        if( response.action == "viewByManager"){
             let empByManager = await db.query("SELECT employee.id, " +
-                                            "CONCAT(employee.first_name,' ', employee.last_name), " +
-                                            "CONCAT(manager.first_name,' ', manager.last_name)" +
+                                            "CONCAT(employee.first_name,' ', employee.last_name) AS Employee_Name, " +
+                                            "CONCAT(manager.first_name,' ', manager.last_name) AS Manager_Name " +
                                             "FROM employee LEFT JOIN role ON role.id=employee.role_id " +
                                             "LEFT JOIN employee AS manager ON employee.manager_id=manager.id;")
             console.table( empByManager );
         }
-        else if( response.action == "updateEmpManager"){
+        if( response.action == "updateEmpManager"){
             const viewEmployee = await db.query("SELECT * FROM employee")
             employee = []
             viewEmployee.forEach( function( item ){
@@ -431,15 +434,17 @@ async function mainApp(){
                 }
             ])
                 const newManager = await db.query('UPDATE employee SET manager_id= ? WHERE id= ?', [response.newManager, response.selectedEmployee]);
-                console.log(`Succesfully Updated employee's manager!`)
+                console.log(`-------------Succesfully Updated employee's manager!-------------`)
+        }
+        if( response.action == "return"){
+            mainApp();
         }
         else {
-            mainApp();
+            db.close();
         }
     }
     if( response.manage == "exit" ){
         db.close();
     }
-    db.close();
 }
 mainApp();
